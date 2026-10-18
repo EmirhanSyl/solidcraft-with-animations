@@ -20,6 +20,8 @@ mod analysis;
 mod animation;
 #[path = "contact_sweep.rs"]
 mod contact_sweep;
+#[path = "animation_frame.rs"]
+mod frame;
 
 macro_rules! trace_doc {
     () => {
@@ -67,6 +69,10 @@ pub static COMMANDS: &[CommandSpec] = &[
     CommandSpec::new("motion.export_animation", "Export Motion Animation", animation::export).icon("export").noundo().params(
         "study: id|name, or joint: id|name with from and to (degrees for angles, mm for distances, or expressions) and index?;          path: a .gif file, or a folder for PNG frames (frame-0001.png, frame-0002.png, …); samples? (frames, 2…1000; default the          study's steps + 1, or 100); width?, height? (16…4096 pixels, default 800 × 500); camera?: {target, yaw, pitch, roll?,          distance, fov?, up?} (ui.camera's reply; fields left out keep the default view: view.apply's camera, or the home view          framing the model); fps? (1…50, default 20); grid?, axes? (default true: the ground grid and the origin's axes) - draws the study as it plays, or the joint as it is driven, with the headless          renderer → path, format, frames, width, height, fps (GIF), bytes, renderer, stopped_at, stopped_by_loop,          stopped_by_contact (the design is not changed)",
     ),
+    CommandSpec::new("animation.frame", "Evaluate Animation Frame", frame::sample)
+        .icon("play")
+        .noundo()
+        .params("progress: 0…1; study?: id|name; view?: id|name — joint pose and exploded placement at this point, without changing the design → positions, motion"),
     CommandSpec::new("motion.trace", "Motion Trace", trace).at("SOLID", "ASSEMBLE").icon("trace").noundo().params(concat!(
         trace_doc!(),
         " → points: [[x,y,z]…] world positions, samples (taken), stopped_at (the sample where the motion stopped short; the trace \

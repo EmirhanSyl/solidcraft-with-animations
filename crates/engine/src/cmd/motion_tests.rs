@@ -174,6 +174,39 @@ fn exploded_views_show_without_changing_the_design() {
     assert_eq!(run(&mut s, "explode.list", json!({}))["views"].as_array().map(Vec::len), Some(2));
 }
 
+#[test]
+fn animation_frame_combines_joint_motion_and_explosion_without_editing_the_design() {
+    let mut s = rail();
+    run(&mut s, "motion.study", json!({"name": "Slide", "steps": 10, "keys": [{"joint": "Rail", "points": [[0, 10], [10, 0]]}]}));
+    run(&mut s, "explode.create", json!({"name": "Lift", "moves": [{"occurrence": "B", "translate": [0, 0, 20]}]}));
+    let b_id = occ(&s, "B");
+    s.pending_moves.insert(b_id, solidcraft_doc::IDENTITY);
+    let before = s.doc.clone();
+    let pending = s.pending_moves.clone();
+    let start = run(&mut s, "animation.frame", json!({"study": "Slide", "view": "Lift", "progress": 0}));
+    let middle = run(&mut s, "animation.frame", json!({"study": "Slide", "view": "Lift", "progress": 0.5}));
+    let motion_only = run(&mut s, "animation.frame", json!({"study": "Slide", "progress": 0.5}));
+    let explode_only = run(&mut s, "animation.frame", json!({"view": "Lift", "progress": 0.5}));
+    let b = |frame: &Value, axis: usize| {
+        frame["positions"]
+            .as_array()
+            .and_then(|positions| positions.iter().find(|p| p["occurrence"] == "B:1"))
+            .and_then(|p| p["pose"]["origin"][axis].as_f64())
+            .unwrap_or(f64::NAN)
+    };
+    assert!((b(&middle, 0) - b(&start, 0) + 5.0).abs() < 1e-6, "{middle}");
+    assert!((b(&middle, 2) - b(&start, 2) - 10.0).abs() < 1e-6, "{middle}");
+    assert!((b(&motion_only, 0) - b(&middle, 0)).abs() < 1e-6);
+    assert!((b(&explode_only, 2) - b(&middle, 2)).abs() < 1e-6);
+    assert!(explode_only["motion"].is_null());
+    assert_eq!(*s.doc, *before);
+    assert_eq!(s.pending_moves, pending);
+    for progress in [json!(-0.1), json!(1.1), json!("half"), json!(null)] {
+        assert!(s.execute("animation.frame", &json!({"study": "Slide", "progress": progress})).is_err());
+    }
+    assert!(s.execute("animation.frame", &json!({"progress": 0.5})).is_err());
+}
+
 /// Pictures drawn by the CPU rasterizer (the engine has no GPU): real views of the scene.
 fn cpu(scene: &crate::render::Scene, cam: &crate::render::Camera, w: u32, h: u32) -> Result<crate::capture::Picture, String> {
     Ok(crate::capture::Picture { rgba: crate::render::render(scene, cam, w as usize, h as usize).rgba, renderer: "cpu" })
