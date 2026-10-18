@@ -1,6 +1,6 @@
 //! Colour themes as files (#2255): a `solidcraft-theme/1` JSON file names a base palette (the
 //! built-in Dark or Light) and sets any of its [`Tokens`] by name, so a theme can be a handful of
-//! lines. Built-in themes (the Gruvbox family) are such files under `assets/styles/ui/themes/`;
+//! lines. Built-in themes are such files under `assets/styles/ui/themes/`;
 //! imported ones are kept in the preferences (`Prefs::custom_themes`), so they also work in the
 //! browser. Colour vision modes still apply on top of a theme (`Tokens::with_vision`).
 //!
@@ -224,8 +224,9 @@ pub fn export(name: &str, base: Base, t: &Tokens) -> Value {
     json!({"format": FORMAT, "name": name, "base": base, "colors": colors})
 }
 
-/// The theme files that come with SolidCraft (original files; Gruvbox's palette, MIT).
-const BUILTIN: [(&str, &str); 6] = [
+/// The theme files that come with SolidCraft.
+const BUILTIN: [(&str, &str); 7] = [
+    ("fusion-learning-preview", include_str!("../../../assets/styles/ui/themes/fusion-learning.json")),
     ("gruvbox-dark", include_str!("../../../assets/styles/ui/themes/gruvbox-dark.json")),
     ("gruvbox-dark-hard", include_str!("../../../assets/styles/ui/themes/gruvbox-dark-hard.json")),
     ("gruvbox-dark-soft", include_str!("../../../assets/styles/ui/themes/gruvbox-dark-soft.json")),
@@ -289,6 +290,17 @@ mod tests {
             assert_ne!(resolve(t), base, "{}", t.id);
             assert_eq!(t.base.is_dark(), t.id.contains("dark"), "{}", t.id);
         }
+    }
+
+    #[test]
+    fn fusion_learning_changes_chrome_without_recoloring_the_model() {
+        let theme = find("fusion-learning-preview", &[]).expect("built-in theme");
+        let colors = resolve(theme);
+        let base = Tokens::light();
+        assert_eq!(theme.base, Base::Light);
+        assert_ne!(colors.toolbar, base.toolbar);
+        assert_eq!((colors.body, colors.sel_face), (base.body, base.sel_face));
+        assert_eq!((colors.viewport_top, colors.viewport_bottom), (Color32::WHITE, Color32::WHITE));
     }
 
     /// Title and section bands stand out from a dialog in every built-in theme, as in Dark and

@@ -69,8 +69,9 @@ Shortcuts changes them.
 ### Colour themes
 
 General › **Theme** lists Dark, Light and System (follows the operating system), the built-in
-Gruvbox themes (dark and light, each in hard, normal and soft contrast) and any themes you have
-imported. A choice applies at once.
+Fusion Learning preview and Gruvbox themes (dark and light, each in hard, normal and soft
+contrast), and any themes you have imported. A choice applies at once. Fusion Learning currently
+changes the interface colours; the layout and command artwork still use SolidCraft's defaults.
 
 A theme is a small JSON file that starts from the Dark or Light palette and changes any of its
 colours by name:
